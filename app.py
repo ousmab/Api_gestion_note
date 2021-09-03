@@ -1,14 +1,17 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+#from flask_cors import CORS
 
 app = Flask(__name__)
-
+#CORS(app)
 app.config["SECRET_KEY"] = "541sdfge87swdkvxwfsfsmkoes49sef"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+
 
 
 class Admin(db.Model):
@@ -20,6 +23,16 @@ class Admin(db.Model):
     #def udpate
     #def delete
     #def get_one_admin
+
+@app.route('/login', methods=["POST"])
+def login():
+    data = request.get_json(force=True)
+
+    admin = Admin.query.filter_by(username=data['username']).first()
+    if not admin:
+        return jsonify({'message': 'BAD_USER'})
+
+    return {"meri" : "abs"}
 
 """
 
@@ -35,9 +48,7 @@ class Classe(db.Model):
 
     @classmethod
     def get_all(cls):
-        """
-        :return: [{},{},{}]
-        """
+      
         data = cls.query.all()
         if data:
             output_data = []
