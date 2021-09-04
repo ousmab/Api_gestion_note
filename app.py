@@ -66,6 +66,18 @@ def signup():
 
     return jsonify({'message': 'SUCCESS'})
 
+@app.route("/admin/logout", methods=['GET'])
+def logout():
+    session['connected'] = None
+    session['user_connected'] = None
+    return jsonify({"message": "SUCCESS"})
+
+@app.route("/test_connection", methods=['GET'])
+def test():
+    if session['connected'] and session['user_connected']:
+        return jsonify({"message" : "USER_IS_CONNECTED"})
+    return jsonify({'message' : "NO_CONNECTED"})
+
 
 """
 
