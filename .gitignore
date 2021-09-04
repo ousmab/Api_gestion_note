@@ -1,4 +1,4 @@
-node_modules
-venv
-migrations
+/node_modules
+/venv
+/migrations
 database.db
