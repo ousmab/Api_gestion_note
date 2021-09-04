@@ -32,6 +32,9 @@ class Admin(db.Model):
 def login():
     data = request.get_json(force=True)
 
+    if session['connected']:
+        return {"message" : "USER_ALREADY_CONNECTED"}
+
     admin = Admin.query.filter_by(username=data['username']).first()
     if not admin:
         return jsonify({'message': 'BAD_USER'})
