@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
-#from flask_cors import CORS
+from werkzeug.security import check_password_hash, generate_password_hash
+from uuid import uuid4
+
+# from flask_cors import CORS
 
 app = Flask(__name__)
-#CORS(app)
+# CORS(app)
 app.config["SECRET_KEY"] = "541sdfge87swdkvxwfsfsmkoes49sef"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 
@@ -12,19 +16,19 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-
-
 class Admin(db.Model):
     id_admin = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
+    public_id = db.Column(db.Integer, unique=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(500), nullable=False)
 
-    #def create
-    #def udpate
-    #def delete
-    #def get_one_admin
+    # def create
+    # def udpate
+    # def delete
+    # def get_one_admin
 
-@app.route('/login', methods=["POST"])
+
+@app.route('/admin/login', methods=["POST"])
 def login():
     data = request.get_json(force=True)
 
@@ -32,7 +36,33 @@ def login():
     if not admin:
         return jsonify({'message': 'BAD_USER'})
 
-    return {"meri" : "abs"}
+    if not check_password_hash(admin.password, data['password']):
+        return jsonify({'message': 'BAD_CREDENTIAL'})
+
+    session['connected'] = True
+    session['user_connected'] = admin.public_id
+    return {"message": "SUCCESS"}
+
+
+@app.route('/admin/create', methods=['POST'])
+def signup():
+    data = request.get_json(force=True)
+    if not data:
+        return jsonify({'message': 'NO_DATA'})
+
+    pwd_generated = generate_password_hash(data['password'].strip())
+    uuid = str(uuid4())
+    admin = Admin(username=data['username'], public_id=uuid, password=pwd_generated)
+
+    try:
+        db.session.add(admin)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'message' : 'USER_EXIST'})
+
+    return jsonify({'message': 'SUCCESS'})
+
 
 """
 
