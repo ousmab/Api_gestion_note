@@ -4,7 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from uuid import uuid4
-
+import time
+import jwt
 # from flask_cors import CORS
 
 app = Flask(__name__)
@@ -32,8 +33,9 @@ class Admin(db.Model):
 def login():
     data = request.get_json(force=True)
 
-    if session['connected']:
-        return {"message" : "USER_ALREADY_CONNECTED"}
+    time.sleep(2)
+    # if session['connected']:
+    #    return {"message" : "USER_ALREADY_CONNECTED"}
 
     admin = Admin.query.filter_by(username=data['username']).first()
     if not admin:
@@ -42,9 +44,10 @@ def login():
     if not check_password_hash(admin.password, data['password']):
         return jsonify({'message': 'BAD_CREDENTIAL'})
 
+    jwt_token = jwt.encode({'user_id':admin.public_id},app.config['SECRET_KEY'],algorithm="HS256")
     session['connected'] = True
     session['user_connected'] = admin.public_id
-    return {"message": "SUCCESS"}
+    return {"message": "SUCCESS","token": jwt_token}
 
 
 @app.route('/admin/create', methods=['POST'])
@@ -62,9 +65,10 @@ def signup():
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'message' : 'USER_EXIST'})
+        return jsonify({'message': 'USER_EXIST'})
 
     return jsonify({'message': 'SUCCESS'})
+
 
 @app.route("/admin/logout", methods=['GET'])
 def logout():
@@ -72,11 +76,13 @@ def logout():
     session['user_connected'] = None
     return jsonify({"message": "SUCCESS"})
 
-@app.route("/test_connection", methods=['GET'])
+
+@app.route("/connection_status", methods=['GET'])
 def test():
-    if session['connected'] and session['user_connected']:
-        return jsonify({"message" : "USER_IS_CONNECTED"})
-    return jsonify({'message' : "NO_CONNECTED"})
+
+
+    return jsonify({'status': True})
+
 
 
 """
